@@ -1,0 +1,40 @@
+# 编译输出
+build/
+*.o
+*.obj
+*.so
+*.dll
+*.exe
+*.out
+*.a
+*.lib
+*.pch
+*.pdb
+*.ilk
+*.exp
+*.log
+*.tmp
+*.swp
+*.swo
+*.swn
+*.bak
+*.d
+*.dSYM/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# VSCode
+.vscode/
+
+# 其他
+.DS_Store
+Thumbs.db
+.idea/
+*.user
+*.workspace
+*.code-workspace

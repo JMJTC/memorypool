@@ -59,7 +59,7 @@ void BenchmarkMemoryPool(size_t ntimes, size_t nworks, size_t rounds)
 	{
 		t.join();
 	}
-	printf("%lu个线程并发执行%lu轮次，每轮次newElement&deleteElement %lu次，总计花费：%lu ms\n", nworks, rounds, ntimes, total_costtime);
+	printf("%lu个线程并发执行%lu轮次，每轮次newElement&deleteElement %lu次，总计花费：%lu ms\n", nworks, rounds, ntimes, total_costtime * 1000 / CLOCKS_PER_SEC);
 }
 
 void BenchmarkNew(size_t ntimes, size_t nworks, size_t rounds)
@@ -93,16 +93,21 @@ void BenchmarkNew(size_t ntimes, size_t nworks, size_t rounds)
 	{
 		t.join();
 	}
-	printf("%lu个线程并发执行%lu轮次，每轮次malloc&free %lu次，总计花费：%lu ms\n", nworks, rounds, ntimes, total_costtime);
+	printf("%lu个线程并发执行%lu轮次，每轮次malloc&free %lu次，总计花费：%lu ms\n", nworks, rounds, ntimes, total_costtime * 1000 / CLOCKS_PER_SEC);
 }
 
 int main()
 {
     HashBucket::initMemoryPool(); // 使用内存池接口前一定要先调用该函数
-	BenchmarkMemoryPool(100, 1, 10); // 测试内存池
+    for (size_t i = 1 ; i < 30; i++) 
+    {
+        BenchmarkMemoryPool(1000, 1, 1000); // 测试内存池
+    }
 	std::cout << "===========================================================================" << std::endl;
 	std::cout << "===========================================================================" << std::endl;
-	BenchmarkNew(100, 1, 10); // 测试 new delete
-	
+    for (size_t i = 0; i < 30; i++)
+    {
+        BenchmarkNew(1000, i, 10); // 测试系统 new/delete
+    }
 	return 0;
 }

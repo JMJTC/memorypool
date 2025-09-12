@@ -131,12 +131,16 @@ void *PageCache::systemAlloc(size_t numPages)
                                     static_cast<DWORD>(size & 0xFFFFFFFF), // 低 32 位
                                     nullptr);
     if (!hMap)
+    {
         return nullptr;
+    }
 
     void *ptr = MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, size);
     CloseHandle(hMap); // 关闭句柄，不影响映射
     if (!ptr)
+    {
         return nullptr;
+    }
 
     memset(ptr, 0, size); // 初始化为 0
     return ptr;

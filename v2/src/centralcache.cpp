@@ -93,7 +93,9 @@ void *CentralCache::fetchRange(size_t index)
             // 记录span信息，为将CentralCache 多余内存块归还PageCache做准备
             // 1.CentralCache管理小块内存，这些内存可能不连续
             // 2.PageCache 的 deallocateSpan 要求归还连续的内存
-            size_t trackerIndex = m_spanCount.fetch_add(1, std::memory_order_relaxed); // 这里也需要原子操作
+            // 这里也需要原子操作 why? 因为 m_spanCount 是全局共享的
+            // ，而前面使用的自旋锁加锁是按index分段的，所以需要使用原子操作保证安全
+            size_t trackerIndex = m_spanCount.fetch_add(1, std::memory_order_relaxed);
             if (trackerIndex < m_spanTrackers.size())
             {
                 m_spanTrackers[trackerIndex].spanAddr.store(start, std::memory_order_release);

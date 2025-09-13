@@ -7,7 +7,7 @@
 
 namespace MemoryPool_V2
 {
-const std::chrono::milliseconds DELAY_INTERVAL{1000};
+const std::chrono::milliseconds CentralCache::DELAY_INTERVAL{1000};
 
 static const size_t SPAN_PAGES = 8; // 每次从PageCache获取span大小（以页为单位）
 

@@ -1,5 +1,5 @@
 #include "../include/centralcache.h"
-#include "../include/thraedcache.h"
+#include "../include/threadcache.h"
 
 #include <cstdlib>
 

@@ -1,7 +1,7 @@
 #ifndef __MEMORYPOOL_MEMORYPOOL_H__
 #define __MEMORYPOOL_MEMORYPOOL_H__
 
-#include "thraedcache.h"
+#include "threadcache.h"
 
 using namespace MemoryPool_V2;
 

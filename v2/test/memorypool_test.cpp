@@ -2,11 +2,11 @@
 #include <chrono>
 #include <cstring>
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <thread>
 #include <vector>
-#include <iomanip>
 
 #include "memorypool.h"
 
@@ -81,31 +81,38 @@ class Timer
 // 用于测试对象生命周期的类
 class TestObject
 {
-public:
+  public:
     TestObject(int value = 0) : m_value(value)
     {
         std::cout << "TestObject 构造函数调用: " << m_value << std::endl;
     }
-    
+
     ~TestObject()
     {
         std::cout << "TestObject 析构函数调用: " << m_value << std::endl;
     }
-    
-    void setValue(int value) { m_value = value; }
-    int getValue() const { return m_value; }
-    
-private:
+
+    void setValue(int value)
+    {
+        m_value = value;
+    }
+    int getValue() const
+    {
+        return m_value;
+    }
+
+  private:
     int m_value;
 };
 
 // 用于测试内存对齐的类
 class AlignedObject
 {
-public:
+  public:
     AlignedObject() : m_doubleValue(1.1), m_intValue(2)
-    {}
-    
+    {
+    }
+
     double m_doubleValue; // 8字节
     int m_intValue;       // 4字节
 }; // 总大小应该是16字节（考虑对齐）
@@ -149,44 +156,46 @@ void testTypeSafeInterface()
 {
     std::cout << "\n=== 测试类型安全接口 ===" << std::endl;
     TestUtils::Timer timer("类型安全接口测试");
-    
+
     // 测试单对象分配
     std::cout << "1. 测试单对象分配/释放" << std::endl;
-    int* intPtr = MemoryPool::allocate<int>();
+    int *intPtr = MemoryPool::allocate<int>();
     assert(intPtr != nullptr);
     *intPtr = 42;
     assert(*intPtr == 42);
     std::cout << "  成功分配int类型并设置值: " << *intPtr << std::endl;
     MemoryPool::deallocate<int>(intPtr);
-    
+
     // 测试数组分配
     std::cout << "2. 测试数组分配/释放" << std::endl;
     const size_t arraySize = 5;
-    double* doubleArray = MemoryPool::allocateArray<double>(arraySize);
+    double *doubleArray = MemoryPool::allocateArray<double>(arraySize);
     assert(doubleArray != nullptr);
-    
-    for (size_t i = 0; i < arraySize; ++i) {
+
+    for (size_t i = 0; i < arraySize; ++i)
+    {
         doubleArray[i] = i * 1.1;
     }
-    
+
     std::cout << "  数组内容: ";
-    for (size_t i = 0; i < arraySize; ++i) {
+    for (size_t i = 0; i < arraySize; ++i)
+    {
         std::cout << doubleArray[i] << " ";
     }
     std::cout << std::endl;
-    
+
     MemoryPool::deallocateArray<double>(doubleArray);
-    
+
     // 测试对象构造/析构接口
     std::cout << "3. 测试对象构造/析构接口" << std::endl;
-    TestUtils::TestObject* obj = MemoryPool::newObject<TestUtils::TestObject>(100);
+    TestUtils::TestObject *obj = MemoryPool::newObject<TestUtils::TestObject>(100);
     assert(obj != nullptr);
     assert(obj->getValue() == 100);
     std::cout << "  对象当前值: " << obj->getValue() << std::endl;
     obj->setValue(200);
     std::cout << "  修改后对象值: " << obj->getValue() << std::endl;
     MemoryPool::deleteObject(obj);
-    
+
     std::cout << "类型安全接口测试通过!" << std::endl;
 }
 
@@ -195,32 +204,32 @@ void testComplexObjects()
 {
     std::cout << "\n=== 测试复杂对象和内存对齐 ===" << std::endl;
     TestUtils::Timer timer("复杂对象测试");
-    
+
     // 测试内存对齐
     std::cout << "1. 测试内存对齐" << std::endl;
-    TestUtils::AlignedObject* alignedObj = MemoryPool::allocate<TestUtils::AlignedObject>();
+    TestUtils::AlignedObject *alignedObj = MemoryPool::allocate<TestUtils::AlignedObject>();
     assert(alignedObj != nullptr);
-    
+
     // 验证地址对齐
     uintptr_t addr = reinterpret_cast<uintptr_t>(alignedObj);
     bool isAligned = (addr % 8) == 0; // 应该按8字节对齐
     std::cout << "  对象地址: " << alignedObj << " 对齐状态: " << (isAligned ? "对齐" : "未对齐") << std::endl;
     assert(isAligned);
-    
+
     alignedObj->m_doubleValue = 3.14;
     alignedObj->m_intValue = 123;
     std::cout << "  存储值: double=" << alignedObj->m_doubleValue << ", int=" << alignedObj->m_intValue << std::endl;
-    
+
     MemoryPool::deallocate<TestUtils::AlignedObject>(alignedObj);
-    
+
     // 测试带有复杂构造函数的对象
     std::cout << "2. 测试带有复杂构造函数的对象" << std::endl;
-    std::string* str = MemoryPool::newObject<std::string>("测试字符串");
+    std::string *str = MemoryPool::newObject<std::string>("测试字符串");
     assert(str != nullptr);
     assert(*str == "测试字符串");
     std::cout << "  字符串内容: " << *str << std::endl;
     MemoryPool::deleteObject(str);
-    
+
     std::cout << "复杂对象和内存对齐测试通过!" << std::endl;
 }
 
@@ -253,7 +262,7 @@ void testMultiThreading()
     std::cout << "\n=== 测试多线程并发 ===" << std::endl;
     TestUtils::Timer timer("多线程测试");
 
-    const int NUM_THREADS = 4; // 减少线程数，避免过多竞争
+    const int NUM_THREADS = 16;      // 减少线程数，避免过多竞争
     const int OPS_PER_THREAD = 5000; // 减少每个线程的操作次数
 
     std::vector<std::thread> threads;
@@ -290,10 +299,9 @@ void testMultiThreading()
                 {
                     // 释放内存
                     size_t idx = rand() % pointers.size();
-                    
+
                     // 使用保存的模式值进行检查
-                    assert(TestUtils::MemoryChecker::checkMemory(
-                        pointers[idx], sizes[idx], patterns[idx]));
+                    assert(TestUtils::MemoryChecker::checkMemory(pointers[idx], sizes[idx], patterns[idx]));
 
                     MemoryPool::deallocate(pointers[idx], sizes[idx]);
 
@@ -364,129 +372,130 @@ void testPerformanceComparison()
 {
     std::cout << "\n=== 性能对比测试 (MemoryPool vs new/delete vs malloc/free) ===" << std::endl;
     std::vector<TestUtils::PerformanceStats> stats;
-    
+
     const int NUM_ITERATIONS = 100000;
     const size_t MAX_SIZE = 1024;
-    
+
     // 1. 测试MemoryPool性能 (void*接口)
     {
         TestUtils::Timer timer("MemoryPool性能 (void*)");
         std::vector<void *> pointers;
         pointers.reserve(NUM_ITERATIONS);
-        
+
         for (int i = 0; i < NUM_ITERATIONS; ++i)
         {
             size_t size = 1 + (rand() % MAX_SIZE);
             void *ptr = MemoryPool::allocate(size);
             pointers.push_back(ptr);
         }
-        
+
         double duration = timer.getDurationMs();
-        
+
         for (size_t i = 0; i < pointers.size(); ++i)
         {
             // 注意：实际应用中应该知道每个指针的大小
             size_t size = 1 + (rand() % MAX_SIZE);
             MemoryPool::deallocate(pointers[i], size);
         }
-        
+
         stats.push_back({"MemoryPool (void*)", duration, NUM_ITERATIONS / duration, 1.0});
     }
-    
+
     // 2. 测试MemoryPool性能 (类型安全接口)
     {
         TestUtils::Timer timer("MemoryPool性能 (类型安全接口)");
-        std::vector<int*> pointers;
+        std::vector<int *> pointers;
         pointers.reserve(NUM_ITERATIONS);
-        
+
         for (int i = 0; i < NUM_ITERATIONS; ++i)
         {
-            int* ptr = MemoryPool::allocate<int>();
+            int *ptr = MemoryPool::allocate<int>();
             pointers.push_back(ptr);
         }
-        
+
         double duration = timer.getDurationMs();
-        
-        for (int* ptr : pointers)
+
+        for (int *ptr : pointers)
         {
             MemoryPool::deallocate<int>(ptr);
         }
-        
+
         stats.push_back({"MemoryPool (类型安全)", duration, NUM_ITERATIONS / duration, 1.0});
     }
-    
+
     // 3. 测试系统malloc/free性能
     {
         TestUtils::Timer timer("系统malloc/free性能");
         std::vector<void *> pointers;
         pointers.reserve(NUM_ITERATIONS);
-        
+
         for (int i = 0; i < NUM_ITERATIONS; ++i)
         {
             size_t size = 1 + (rand() % MAX_SIZE);
             void *ptr = malloc(size);
             pointers.push_back(ptr);
         }
-        
+
         double duration = timer.getDurationMs();
-        
+
         for (void *ptr : pointers)
         {
             free(ptr);
         }
-        
+
         stats.push_back({"系统malloc/free", duration, NUM_ITERATIONS / duration, 1.0});
     }
-    
+
     // 4. 测试系统new/delete性能
     {
         TestUtils::Timer timer("系统new/delete性能");
-        std::vector<int*> pointers;
+        std::vector<int *> pointers;
         pointers.reserve(NUM_ITERATIONS);
-        
+
         for (int i = 0; i < NUM_ITERATIONS; ++i)
         {
-            int* ptr = new int();
+            int *ptr = new int();
             pointers.push_back(ptr);
         }
-        
+
         double duration = timer.getDurationMs();
-        
-        for (int* ptr : pointers)
+
+        for (int *ptr : pointers)
         {
             delete ptr;
         }
-        
+
         stats.push_back({"系统new/delete", duration, NUM_ITERATIONS / duration, 1.0});
     }
-    
+
     // 计算效率比（基于内存池性能）
     double minDuration = stats[0].durationMs;
-    for (auto& s : stats) {
-        if (s.durationMs < minDuration) {
+    for (auto &s : stats)
+    {
+        if (s.durationMs < minDuration)
+        {
             minDuration = s.durationMs;
         }
     }
-    
-    for (auto& s : stats) {
+
+    for (auto &s : stats)
+    {
         s.efficiencyRatio = minDuration / s.durationMs;
     }
-    
+
     // 输出详细性能对比表
     std::cout << "\n=== 性能对比结果 ===" << std::endl;
-    std::cout << std::left << std::setw(30) << "方法" 
-              << std::setw(15) << "耗时(ms)" 
-              << std::setw(15) << "吞吐量(ops/ms)" 
-              << std::setw(15) << "效率比" << std::endl;
+    std::cout << std::left << std::setw(30) << "方法" << std::setw(15) << "耗时(ms)" << std::setw(15)
+              << "吞吐量(ops/ms)" << std::setw(15) << "效率比" << std::endl;
     std::cout << "------------------------------------------------------------------------" << std::endl;
-    
-    for (const auto& s : stats) {
-        std::cout << std::left << std::setw(30) << s.name 
-                  << std::setw(15) << std::fixed << std::setprecision(2) << s.durationMs 
-                  << std::setw(15) << std::fixed << std::setprecision(2) << s.throughput 
+
+    for (const auto &s : stats)
+    {
+        std::cout << std::left << std::setw(30) << s.name << std::setw(15) << std::fixed << std::setprecision(2)
+                  << s.durationMs << std::setw(15) << std::fixed << std::setprecision(2) << s.throughput
                   << std::setw(15) << std::fixed << std::setprecision(2) << s.efficiencyRatio << std::endl;
     }
-    
+
     std::cout << "\n=== 性能分析总结 ===" << std::endl;
     std::cout << "1. 内存池在小内存块频繁分配/释放场景下通常表现更优" << std::endl;
     std::cout << "2. 类型安全接口与原始void*接口性能接近，但提供了更好的类型安全性" << std::endl;
@@ -495,8 +504,7 @@ void testPerformanceComparison()
 }
 
 // 运行单个测试并捕获异常的辅助函数
-template<typename Func>
-bool runTest(const std::string& testName, Func testFunc)
+template <typename Func> bool runTest(const std::string &testName, Func testFunc)
 {
     std::cout << "\n=== 开始测试: " << testName << " ===" << std::endl;
     try
@@ -527,44 +535,51 @@ int main()
     srand(static_cast<unsigned int>(time(nullptr)));
 
     std::cout << "注意: 运行测试套件，每个测试独立执行，出现异常时继续执行其他测试..." << std::endl;
-    
+
     int successCount = 0;
     int totalCount = 0;
-    
+
     // 运行所有测试
     std::cout << "\n=== 基本功能测试组 ===" << std::endl;
-    successCount += runTest("基本内存分配和释放", testBasicAllocation); totalCount++;
-    successCount += runTest("类型安全接口", testTypeSafeInterface); totalCount++;
-    successCount += runTest("复杂对象和内存对齐", testComplexObjects); totalCount++;
-    
+    successCount += runTest("基本内存分配和释放", testBasicAllocation);
+    totalCount++;
+    successCount += runTest("类型安全接口", testTypeSafeInterface);
+    totalCount++;
+    successCount += runTest("复杂对象和内存对齐", testComplexObjects);
+    totalCount++;
+
     std::cout << "\n=== 边界条件测试组 ===" << std::endl;
-    successCount += runTest("边界条件", testEdgeCases); totalCount++;
-    
+    successCount += runTest("边界条件", testEdgeCases);
+    totalCount++;
+
     std::cout << "\n=== 并发和压力测试组 ===" << std::endl;
-    successCount += runTest("多线程并发", testMultiThreading); totalCount++;
-    successCount += runTest("大量小内存块", testMassAllocation); totalCount++;
-    
+    successCount += runTest("多线程并发", testMultiThreading);
+    totalCount++;
+    successCount += runTest("大量小内存块", testMassAllocation);
+    totalCount++;
+
     std::cout << "\n=== 性能测试组 ===" << std::endl;
     std::cout << "注意: 性能对比测试可能会因内存池实现限制而失败，已跳过。" << std::endl;
-    // successCount += runTest("性能对比", testPerformanceComparison); totalCount++;
-    
+    successCount += runTest("性能对比", testPerformanceComparison);
+    totalCount++;
+
     // 输出测试结果汇总
     std::cout << "\n\n=== 测试结果汇总 ===" << std::endl;
     std::cout << "总测试数: " << totalCount << std::endl;
     std::cout << "通过测试数: " << successCount << std::endl;
     std::cout << "失败测试数: " << (totalCount - successCount) << std::endl;
-    
+
     std::cout << "\n=== 内存池实现总结 ===" << std::endl;
     std::cout << "1. 提供了原始void*接口和类型安全接口，兼容不同使用场景" << std::endl;
     std::cout << "2. 支持单对象分配、数组分配以及对象构造/析构一体化操作" << std::endl;
     std::cout << "3. 能够处理基本的边界条件，如极小内存块" << std::endl;
     std::cout << "4. 设计支持多线程并发访问，但在高压力下可能存在一些问题" << std::endl;
     std::cout << "5. 在频繁的小内存分配/释放场景下有潜力比系统内存管理更高效" << std::endl;
-    
+
     std::cout << "\n注意事项：" << std::endl;
     std::cout << "- 内存池实现中可能存在一些并发或边界条件处理的问题" << std::endl;
     std::cout << "- 建议进一步优化内存池的实现，特别是对空指针、零大小和大内存块的处理" << std::endl;
     std::cout << "- 性能对比测试已暂时跳过，需要修复后再启用" << std::endl;
-    
+
     return (successCount == totalCount) ? 0 : 1;
 }

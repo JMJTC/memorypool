@@ -44,7 +44,7 @@ void *PageCache::allocateSpan(size_t numPages)
 
             span->numPages = numPages;
             // 分割的同样需要记录信息
-            m_spanMap[newSpan->pageAddr] = span;
+            m_spanMap[newSpan->pageAddr] = newSpan;
         }
         // 记录信息
         m_spanMap[span->pageAddr] = span;
@@ -75,21 +75,27 @@ void PageCache::deallocateSpan(void *ptr, size_t numPages)
         return;
     }
     Span *span = it->second;
-    // 尝试合并相邻psan
+    // 尝试合并相邻span
     void *nextAddr = static_cast<void *>(static_cast<char *>(ptr) + numPages * PAGE_SIZE);
     auto nextIt = m_spanMap.find(nextAddr);
     if (nextIt != m_spanMap.end())
     {
         Span *nextSpan = nextIt->second;
 
-        // 判断是否再空闲链表中
+        // 判断是否在空闲链表中
         bool flag = false;
-        auto &nextList = m_freeSpans[nextSpan->numPages];
+        size_t nextSpanSize = nextSpan->numPages;
+        auto &nextList = m_freeSpans[nextSpanSize];
 
         if (nextList == nextSpan)
         {
             nextList = nextSpan->next;
             flag = true;
+            // 如果移除后链表为空，从m_freeSpans中删除该键
+            if (nextList == nullptr)
+            {
+                m_freeSpans.erase(nextSpanSize);
+            }
         }
         else if (nextList != nullptr)
         {
@@ -105,6 +111,11 @@ void PageCache::deallocateSpan(void *ptr, size_t numPages)
                 }
                 prev = prev->next;
             }
+            // 检查移除后链表是否为空，如果为空则删除该键
+            if (flag && nextList == nullptr)
+            {
+                m_freeSpans.erase(nextSpanSize);
+            }
         }
 
         // 合并
@@ -115,9 +126,19 @@ void PageCache::deallocateSpan(void *ptr, size_t numPages)
             delete nextSpan;
         }
     }
-    auto &list = m_freeSpans[span->numPages];
-    span->next = list;
-    list = span;
+    auto itSpan = m_freeSpans.find(span->numPages);
+    if (itSpan != m_freeSpans.end())
+    {
+        // 已存在链表
+        span->next = itSpan->second;
+        itSpan->second = span;
+    }
+    else
+    {
+        // 新建链表头
+        m_freeSpans[span->numPages] = span;
+        span->next = nullptr;
+    }
 }
 
 void *PageCache::systemAlloc(size_t numPages)

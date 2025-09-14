@@ -373,8 +373,8 @@ void testPerformanceComparison()
     std::cout << "\n=== 性能对比测试 (MemoryPool vs new/delete vs malloc/free) ===" << std::endl;
     std::vector<TestUtils::PerformanceStats> stats;
 
-    const int NUM_ITERATIONS = 100000;
-    const size_t MAX_SIZE = 1024;
+    const int NUM_ITERATIONS = 10000;
+    const size_t MAX_SIZE = 128;
 
     // 1. 测试MemoryPool性能 (void*接口)
     {

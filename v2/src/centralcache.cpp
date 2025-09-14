@@ -220,21 +220,23 @@ void CentralCache::performDelayReturn(size_t index)
 void CentralCache::updateSpanFreeCount(SpanTracker *tracker, size_t newFreeBlocks, size_t index)
 {
     // 这里的tracker是m_spanTrackers中的某个值
-    // 直接获取就好了，在前面是已经记录过了的
-    // todo : 为验证可靠性，后续测试单步调试验证下
-    if (tracker->freeCount.load(std::memory_order_relaxed) == newFreeBlocks)
-    {
-        std::cout << "[CentralCache::updateSpanFreeCount] : 直接获取就好了，在前面是已经记录过了的 OK" << std::endl;
-    }
-    else
-    {
-        std::cout << "[CentralCache::updateSpanFreeCount] : 记录的值和获取的值不一致" << std::endl;
-    }
+    // 直接获取就好了，在前面是已经记录过了的 XXX 不对
+    // todo : 在thread归还到central时没有对应的更新m_spanTrackers里的freeCount, 更新费时也不方便更新
+    // todo : 逻辑还存在问题需要修复
+    // if (tracker->freeCount.load(std::memory_order_relaxed) == newFreeBlocks)
+    // {
+    //     std::cout << "[CentralCache::updateSpanFreeCount] : 直接获取就好了，在前面是已经记录过了的 OK" << std::endl;
+    // }
+    // else
+    // {
+    //     std::cout << "[CentralCache::updateSpanFreeCount] : 记录的值和获取的值不一致" << std::endl;
+    // }
     tracker->freeCount.store(newFreeBlocks, std::memory_order_relaxed);
 
     // 所有块都空闲，归还span
     if (newFreeBlocks == tracker->blockCount.load(std::memory_order_relaxed))
     {
+        // std::cout << "[CentralCache::updateSpanFreeCount] : 归还到PageCache" << std::endl;
         void *spanAddr = tracker->spanAddr.load(std::memory_order_relaxed);
         size_t numPages = tracker->numPages.load(std::memory_order_relaxed);
 
@@ -246,6 +248,8 @@ void CentralCache::updateSpanFreeCount(SpanTracker *tracker, size_t newFreeBlock
         char *spanStart = reinterpret_cast<char *>(spanAddr);
         char *spanEnd = spanStart + numPages * PageCache::PAGE_SIZE;
 
+        // 把 m_centralFreeList[index] 遍历一遍，剔除所有属于 span 的节点，
+        // 只保留不属于该 span 的节点，并把它们重连成一个新的链表
         while (current != nullptr)
         {
             void *next = *reinterpret_cast<void **>(current);

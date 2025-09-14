@@ -119,6 +119,7 @@ void *CentralCache::fetchRange(size_t index)
             else
             {
                 std::cout << "[CentralCache::fetchRange]: getSpanTracker异常" << std::endl;
+                return nullptr;
             }
         }
     }
@@ -207,6 +208,7 @@ void CentralCache::performDelayReturn(size_t index)
         else
         {
             std::cout << "[CentralCache::performDelayReturn]: getSpanTracker异常" << std::endl;
+            return;
         }
         currentBlock = *reinterpret_cast<void **>(currentBlock);
     }

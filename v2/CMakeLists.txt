@@ -21,14 +21,19 @@ set(TEST_SOURCES
     test/memorypool_test.cpp
 )
 
-set(DEMO_SOURCES
-    test/memorypool_usage_demo.cpp
+# Perf test sources
+set(PERF_SOURCES
+    test/memorypool_perf.cpp
 )
+
 
 # Add the executable for the main target
 add_library(${PROJECT_NAME}_shared SHARED ${SOURCES})
 add_executable(${PROJECT_NAME}_test ${TEST_SOURCES} ${SOURCES})
-add_executable(${PROJECT_NAME}_demo ${DEMO_SOURCES} ${SOURCES})
+## add_executable(${PROJECT_NAME}_demo ...) # 已移除无效 demo 目标
+
+# Perf test target
+add_executable(${PROJECT_NAME}_perf ${PERF_SOURCES} ${SOURCES})
 
 # Link libraries if needed (e.g., pthread)
 find_package(Threads REQUIRED)
@@ -36,13 +41,16 @@ find_package(Threads REQUIRED)
 if(UNIX)
     target_compile_options(${PROJECT_NAME}_shared PRIVATE -g -pthread)
     target_compile_options(${PROJECT_NAME}_test PRIVATE -g -pthread)
-    target_compile_options(${PROJECT_NAME}_demo PRIVATE -g -pthread)
+    target_compile_options(${PROJECT_NAME}_perf PRIVATE -g -pthread)
+    ## target_compile_options(${PROJECT_NAME}_demo PRIVATE -g -pthread)
 elseif(WIN32)
     target_compile_options(${PROJECT_NAME}_shared PRIVATE /Zi /W4)
     target_compile_options(${PROJECT_NAME}_test PRIVATE /Zi /W4)
-    target_compile_options(${PROJECT_NAME}_demo PRIVATE /Zi /W4)
+    target_compile_options(${PROJECT_NAME}_perf PRIVATE /Zi /W4)
+    ## target_compile_options(${PROJECT_NAME}_demo PRIVATE /Zi /W4)
 endif()
 
 target_link_libraries(${PROJECT_NAME}_shared PRIVATE Threads::Threads)
 target_link_libraries(${PROJECT_NAME}_test PRIVATE Threads::Threads)
-target_link_libraries(${PROJECT_NAME}_demo PRIVATE Threads::Threads)
+## target_link_libraries(${PROJECT_NAME}_demo PRIVATE Threads::Threads)
+target_link_libraries(${PROJECT_NAME}_perf PRIVATE Threads::Threads)

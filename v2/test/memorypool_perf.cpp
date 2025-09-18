@@ -478,7 +478,7 @@ class PerformanceTest
 int main()
 {
     std::cout << "Starting performance tests..." << std::endl;
-    MemoryPool::warmupCommon();
+    PerformanceTest::warmup();
 
     // 运行测试
     PerformanceTest::testSmallAllocation();
